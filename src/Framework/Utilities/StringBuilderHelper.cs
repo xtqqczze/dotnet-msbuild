@@ -38,7 +38,7 @@ internal ref struct StringBuilderHelper(int capacity)
         _builder = null;
 
         return builder is not null
-                ? StringBuilderCache.GetStringAndRelease(builder)
-                : string.Empty;
+            ? StringBuilderCache.GetStringAndRelease(builder)
+            : string.Empty;
     }
 }
