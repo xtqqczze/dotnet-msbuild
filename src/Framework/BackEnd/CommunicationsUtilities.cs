@@ -60,7 +60,9 @@ internal static class CommunicationsUtilities
     private static long s_lastLoggedTicks = DateTime.UtcNow.Ticks;
 
     /// <summary>
-    ///  Case-insensitive string comparer for environment variable names.
+    ///  On Windows, environment variables should be case-insensitive;
+    ///  on Unix-like systems, they should be case-sensitive, but this might be a breaking change in an edge case.
+    ///  https://github.com/dotnet/msbuild/issues/12858.
     /// </summary>
     internal static StringComparer EnvironmentVariableComparer => StringComparer.OrdinalIgnoreCase;
 
