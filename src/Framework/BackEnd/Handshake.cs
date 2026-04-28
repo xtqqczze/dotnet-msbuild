@@ -144,7 +144,7 @@ internal class Handshake
         CommunicationsUtilities.AvoidEndOfHandshakeSignal(_handshakeComponents.SessionId));
 
     public virtual string GetKey()
-        => $"{_handshakeComponents.Options} {_handshakeComponents.Salt} {_handshakeComponents.FileVersionMajor} {_handshakeComponents.FileVersionMinor} {_handshakeComponents.FileVersionBuild} {_handshakeComponents.FileVersionPrivate} {_handshakeComponents.SessionId}".ToString(CultureInfo.InvariantCulture);
+        => $"{_handshakeComponents.Options} {_handshakeComponents.Salt} {_handshakeComponents.FileVersionMajor} {_handshakeComponents.FileVersionMinor} {_handshakeComponents.FileVersionBuild} {_handshakeComponents.FileVersionPrivate} {_handshakeComponents.SessionId}";
 
     public virtual byte? ExpectedVersionInFirstByte
         => CommunicationsUtilities.handshakeVersion;
