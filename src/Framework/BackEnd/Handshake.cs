@@ -3,7 +3,6 @@
 
 using System;
 using System.Diagnostics;
-using System.Globalization;
 using System.Reflection;
 using Microsoft.Build.Framework;
 using Microsoft.Build.Shared;
