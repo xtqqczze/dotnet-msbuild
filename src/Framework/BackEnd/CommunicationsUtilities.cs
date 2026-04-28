@@ -5,7 +5,6 @@ using System;
 using System.Collections;
 using System.Collections.Frozen;
 using System.Collections.Generic;
-using System.Globalization;
 using System.IO;
 using System.IO.Pipes;
 using System.Runtime.CompilerServices;
@@ -492,7 +491,7 @@ internal static class CommunicationsUtilities
             // https://github.com/dotnet/corefx/issues/28791
             if (!readTask.Wait(timeout))
             {
-                result = HandshakeResult.Failure(HandshakeStatus.Timeout, String.Format(CultureInfo.InvariantCulture, "Did not receive return handshake in {0}ms", timeout));
+                result = HandshakeResult.Failure(HandshakeStatus.Timeout, $"Did not receive return handshake in {timeout}ms");
                 return false;
             }
 
@@ -508,7 +507,7 @@ internal static class CommunicationsUtilities
             {
                 stream.WriteIntForHandshake(0x0F0F0F0F);
                 stream.WriteIntForHandshake(0x0F0F0F0F);
-                result = HandshakeResult.Failure(HandshakeStatus.OldMSBuild, string.Format(CultureInfo.InvariantCulture, "Client: rejected old host. Received byte {0} instead of {1}.", bytes[0], byteToAccept));
+                result = HandshakeResult.Failure(HandshakeStatus.OldMSBuild, $"Client: rejected old host. Received byte {bytes[0]} instead of {byteToAccept}.");
                 return false;
             }
 
