@@ -26,9 +26,7 @@ namespace Microsoft.Build.Tasks
     [MSBuildMultiThreadableTask]
     public class GetAssemblyIdentity : TaskExtension, IMultiThreadableTask
     {
-        /// <summary>
-        /// Gets or sets the task execution environment for thread-safe path resolution.
-        /// </summary>
+        /// <inheritdoc />
         public TaskEnvironment TaskEnvironment { get; set; } = TaskEnvironment.Fallback;
 
         private ITaskItem[] _assemblyFiles;

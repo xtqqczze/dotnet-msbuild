@@ -35,8 +35,11 @@ namespace Microsoft.Build.UnitTests
         public void AbsolutePathToExistingAssembly_ProducesCorrectIdentity()
         {
             // Use this test assembly as the input — it's guaranteed to exist.
+            // Use the compile-time assembly name as the baseline rather than
+            // AssemblyName.GetAssemblyName(path), to avoid asserting against the same
+            // reflection API the production code uses internally.
             string assemblyPath = typeof(GetAssemblyIdentity_Tests).Assembly.Location;
-            AssemblyName expectedName = AssemblyName.GetAssemblyName(assemblyPath);
+            AssemblyName expectedName = typeof(GetAssemblyIdentity_Tests).Assembly.GetName();
 
             GetAssemblyIdentity task = CreateTaskUnderTest();
             task.AssemblyFiles = [new TaskItem(assemblyPath)];
@@ -84,7 +87,7 @@ namespace Microsoft.Build.UnitTests
             TransientTestFile textFile = env.CreateFile("bad.txt", "not an assembly");
 
             string goodAssemblyPath = typeof(GetAssemblyIdentity_Tests).Assembly.Location;
-            AssemblyName expectedName = AssemblyName.GetAssemblyName(goodAssemblyPath);
+            AssemblyName expectedName = typeof(GetAssemblyIdentity_Tests).Assembly.GetName();
 
             var engine = new MockEngine(_output);
             GetAssemblyIdentity task = CreateTaskUnderTest(engine);
@@ -132,7 +135,7 @@ namespace Microsoft.Build.UnitTests
             TransientTestFolder projectDir = env.CreateFolder();
 
             string sourceAssembly = typeof(GetAssemblyIdentity_Tests).Assembly.Location;
-            AssemblyName expectedName = AssemblyName.GetAssemblyName(sourceAssembly);
+            AssemblyName expectedName = typeof(GetAssemblyIdentity_Tests).Assembly.GetName();
 
             string relativeFileName = "TestAssembly.dll";
             File.Copy(sourceAssembly, Path.Combine(projectDir.Path, relativeFileName));
@@ -152,7 +155,7 @@ namespace Microsoft.Build.UnitTests
         public void OutputItem_DoesNotContainAbsolutizedPaths()
         {
             string assemblyPath = typeof(GetAssemblyIdentity_Tests).Assembly.Location;
-            AssemblyName expectedName = AssemblyName.GetAssemblyName(assemblyPath);
+            AssemblyName expectedName = typeof(GetAssemblyIdentity_Tests).Assembly.GetName();
 
             GetAssemblyIdentity task = CreateTaskUnderTest();
             task.AssemblyFiles = [new TaskItem(assemblyPath)];
@@ -178,8 +181,8 @@ namespace Microsoft.Build.UnitTests
 
             task.Execute().ShouldBeTrue();
 
-            task.Assemblies.Length.ShouldBe(1);
-            task.Assemblies[0].GetMetadata("CustomMeta").ShouldBe("CustomValue");
+            task.Assemblies.ShouldHaveSingleItem()
+                .GetMetadata("CustomMeta").ShouldBe("CustomValue");
         }
 
         private void AssertCouldNotGetAssemblyName(MockEngine engine)
