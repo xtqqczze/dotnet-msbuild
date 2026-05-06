@@ -17,6 +17,9 @@ using Microsoft.Build.Shared;
 using Microsoft.Build.Shared.Debugging;
 using Microsoft.Build.TelemetryInfra;
 using Microsoft.NET.StringTools;
+#if FEATURE_WINDOWSINTEROP
+using Windows.Win32.System.SystemInformation;
+#endif
 using BuildAbortedException = Microsoft.Build.Exceptions.BuildAbortedException;
 
 #nullable disable
@@ -132,10 +135,12 @@ namespace Microsoft.Build.BackEnd
         /// </summary>
         private readonly string _debugDumpFilePath;
 
+#if FEATURE_WINDOWSINTEROP
         /// <summary>
         /// Forces caching of all configurations and results.
         /// </summary>
         private readonly bool _debugForceCaching;
+#endif
 
         /// <summary>
         /// Constructor
@@ -144,7 +149,9 @@ namespace Microsoft.Build.BackEnd
         {
             _debugDumpState = Traits.Instance.DebugScheduler;
             _debugDumpDirectory = FrameworkDebugUtils.DebugPath;
+#if FEATURE_WINDOWSINTEROP
             _debugForceCaching = Environment.GetEnvironmentVariable("MSBUILDDEBUGFORCECACHING") == "1";
+#endif
 
             if (string.IsNullOrEmpty(_debugDumpDirectory))
             {
@@ -889,6 +896,7 @@ namespace Microsoft.Build.BackEnd
         [SuppressMessage("Microsoft.Reliability", "CA2001:AvoidCallingProblematicMethods", MessageId = "System.GC.Collect", Justification = "We're trying to get rid of memory because we're running low, so we need to collect NOW in order to free it up ASAP")]
         private void CheckMemoryUsage()
         {
+#if FEATURE_WINDOWSINTEROP
             if (!NativeMethodsShared.IsWindows || BuildEnvironmentHelper.Instance.RunningInVisualStudio)
             {
                 // Since this causes synchronous I/O and a stop-the-world GC, it can be very expensive. If
@@ -905,18 +913,17 @@ namespace Microsoft.Build.BackEnd
             // Jeffrey Richter suggests that when the memory load in the system exceeds 80% it is a good
             // idea to start finding ways to unload unnecessary data to prevent memory starvation.  We use this metric in
             // our calculations below.
-            NativeMethodsShared.MemoryStatus memoryStatus = NativeMethodsShared.GetMemoryStatus();
-            if (memoryStatus != null)
+            if (NativeMethodsShared.TryGetMemoryStatus(out MEMORYSTATUSEX memoryStatus))
             {
                 try
                 {
                     // The minimum limit must be no more than 80% of the virtual memory limit to reduce the chances of a single unfortunately
                     // large project resulting in allocations which exceed available VM space between calls to this function.  This situation
                     // is more likely on 32-bit machines where VM space is only 2 gigs.
-                    ulong memoryUseLimit = Convert.ToUInt64(memoryStatus.TotalVirtual * 0.8);
+                    ulong memoryUseLimit = Convert.ToUInt64(memoryStatus.ullTotalVirtual * 0.8);
 
                     // See how much memory we are using and compart that to our limit.
-                    ulong memoryInUse = memoryStatus.TotalVirtual - memoryStatus.AvailableVirtual;
+                    ulong memoryInUse = memoryStatus.ullTotalVirtual - memoryStatus.ullAvailVirtual;
                     while ((memoryInUse > memoryUseLimit) || _debugForceCaching)
                     {
                         TraceEngine($"Memory usage at {memoryInUse}, limit is {memoryUseLimit}.  Caching configurations and results cache and collecting.");
@@ -937,8 +944,13 @@ namespace Microsoft.Build.BackEnd
                             break;
                         }
 
-                        memoryStatus = NativeMethodsShared.GetMemoryStatus();
-                        memoryInUse = memoryStatus.TotalVirtual - memoryStatus.AvailableVirtual;
+                        if (!NativeMethodsShared.TryGetMemoryStatus(out memoryStatus))
+                        {
+                            TraceEngine("Failed to get memory status.");
+                            break;
+                        }
+
+                        memoryInUse = memoryStatus.ullTotalVirtual - memoryStatus.ullAvailVirtual;
                         TraceEngine($"Memory usage now at {memoryInUse}");
                     }
                 }
@@ -950,6 +962,7 @@ namespace Microsoft.Build.BackEnd
                     throw new BuildAbortedException(e.Message, e);
                 }
             }
+#endif
         }
 
         /// <summary>
